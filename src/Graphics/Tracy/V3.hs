@@ -24,8 +24,14 @@ type Color = V3
 
 instance Num V3 where
     V3 x y z + V3 x' y' z' = V3 (x + x') (y + y') (z + z')
+    {-# INLINE (+) #-}
+
     V3 x y z - V3 x' y' z' = V3 (x - x') (y - y') (z - z')
+    {-# INLINE (-) #-}
+
     V3 x y z * V3 x' y' z' = V3 (x * x') (y * y') (z * z')
+    {-# INLINE (*) #-}
+
     fromInteger x = V3 (fromInteger x) (fromInteger x) (fromInteger x)
     abs = error "abs"
     signum = error "signum"
@@ -37,42 +43,51 @@ from256 x y z = V3 (x / 255) (y / 255) (z / 255)
 -- | Length of vector.
 len :: V3 -> Double
 len (V3 x y z) = sqrt (x * x + y * y + z * z)
+{-# INLINE len #-}
 
 norm :: V3 -> Double
 norm (V3 x y z) = x * x + y * y + z * z
+{-# INLINE norm #-}
 
 -- | Scale vector such that length becomes 1.
-normalize :: V3 -> V3
+normalize :: V3 -> Normal
 normalize v = (1 / len v) .* v
+{-# INLINE normalize #-}
 
 distance :: V3 -> V3 -> Double
 distance v u = len (v - u)
-
+{-# INLINE distance #-}
 
 -- | Dot product.
 (.*.) :: V3 -> V3 -> Double
 V3 x y z .*. V3 x' y' z' = x * x' + y * y' + z * z'
+{-# INLINE (.*.) #-}
 
 (.*) :: Double -> V3 -> V3
 s .* V3 x y z = V3 (s * x) (s * y) (s * z)
+{-# INLINE (.*) #-}
 
 infix 7 .*
 
 
 projection :: V3 -> V3 -> V3
 projection v u = ((v .*. u) / len v) .* v
+{-# INLINE projection #-}
 
 projectionNorm :: V3 -> V3 -> V3
 projectionNorm v u = (v .*. u) .* v
+{-# INLINE projectionNorm #-}
 
 reflectionNorm :: Normal -> V3 -> V3
 reflectionNorm n d = d - (2 * (d .*. n)) .* n
+{-# INLINE reflectionNorm #-}
 
 -- | Cross product.
 (.^.) :: V3 -> V3 -> V3
 V3 a1 a2 a3 .^. V3 b1 b2 b3 = V3 (a2 * b3 - a3 * b2)
                                  (a3 * b1 - a1 * b3)
                                  (a1 * b2 - a2 * b1)
+{-# INLINE (.^.) #-}
 
 -- | Find a basis from a vector. (one possible)
 someBasis :: Normal -> (Normal, Normal)
