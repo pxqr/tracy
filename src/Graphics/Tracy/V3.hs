@@ -3,8 +3,9 @@ module Graphics.Tracy.V3
        ( V3(..), Ray(..), Normal, Position, Patch, Color
        , from256
        , len, norm, normalize, distance
-       , (.*), (.*.)
+       , (.*), (.*.), (.^.)
        , projection, projectionNorm, reflectionNorm
+       , someBasis
        ) where
 
 data V3 = V3 { _x :: {-# UNPACK #-} !Double
@@ -66,3 +67,19 @@ projectionNorm v u = (v .*. u) .* v
 
 reflectionNorm :: Normal -> V3 -> V3
 reflectionNorm n d = d - (2 * (d .*. n)) .* n
+
+-- | Cross product.
+(.^.) :: V3 -> V3 -> V3
+V3 a1 a2 a3 .^. V3 b1 b2 b3 = V3 (a2 * b3 - a3 * b2)
+                                 (a3 * b1 - a1 * b3)
+                                 (a1 * b2 - a2 * b1)
+
+-- | Find a basis from a vector. (one possible)
+someBasis :: Normal -> (Normal, Normal)
+someBasis v = let orth = V3 0 0 1 .^. v
+              in (orth, orth .^. v)
+
+
+-- | Generate a bunch of normals from a one.
+genNormals :: V3 -> [(Double, Double)] -> [V3]
+genNormals = undefined
