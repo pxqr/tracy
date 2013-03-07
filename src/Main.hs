@@ -6,7 +6,7 @@ import Codec.Picture.Types
 
 import System.Environment
 import System.Console.GetOpt
-import System.FilePath
+import System.FilePath ()
 
 import Paths_tracy (version)
 import Data.Version (showVersion)
@@ -89,7 +89,7 @@ handleArgs opts
 main :: IO ()
 main = getArgs >>= parseArgs >>= handleArgs
 
-
+runTracer :: (Int, Int) -> Scene -> Int -> Int -> Image PixelRGB8
 runTracer (w, h) scene samples depth = let view  = View w h (-1) in
     generateImage (\x y -> vecToColor (tracePixel scene view samples depth x y)) w h
   where
