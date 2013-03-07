@@ -25,6 +25,7 @@ data Options = Options {
     , optOutput    :: FilePath
     , optImageSize :: (Int, Int)
     , optDepth     :: Int
+    , optSamples   :: Int
     } deriving (Show, Eq)
 
 
@@ -36,6 +37,7 @@ defaultOptions = Options {
                  , optOutput  = "out.bmp"
                  , optImageSize = (400, 400)
                  , optDepth   = 1
+                 , optSamples = 50
                  }
 
 options :: [OptDescr (Options -> Options)]
@@ -55,6 +57,8 @@ options =
                  "Width and height of image in format `%width%x%height%'."
     , Option ['d']      ["depth"]   (ReqArg (\depth opts -> opts { optDepth = read depth } ) "")
                  "Recursive depth of raytracer."
+    , Option ['c']      ["samples"] (ReqArg (\samples opts -> opts { optSamples = read samples }) "")
+                 "Count of samples taken for each patch for ambient light."
     ]
         where
           readDim xs = let (a, b) = splitAt (fromJust (findIndex (=='x') xs)) xs
@@ -78,7 +82,7 @@ handleArgs opts
     | optVersion opts = putStrLn (showVersion version)
     | optHelp    opts = putStrLn (usageInfo "" options)
     |    otherwise    = do
-      let bitmap = runTracer (optImageSize opts) defaultScene (optDepth opts)
+      let bitmap = runTracer (optImageSize opts) defaultScene (optSamples opts) (optDepth opts)
       writeBitmap (optOutput opts) bitmap
 
 
@@ -86,8 +90,8 @@ main :: IO ()
 main = getArgs >>= parseArgs >>= handleArgs
 
 
-runTracer (w, h) scene depth = let view  = View w h (-1) in
-    generateImage (\x y -> vecToColor (tracePixel scene view depth x y)) w h
+runTracer (w, h) scene samples depth = let view  = View w h (-1) in
+    generateImage (\x y -> vecToColor (tracePixel scene view samples depth x y)) w h
   where
     toLDR :: Double -> Double
     toLDR x = ((1 / (1 + exp (-x))) - 0.5) * 2
