@@ -1,5 +1,5 @@
 module Graphics.Tracy.Tracer
-       ( Scene(..), View(..), tracePixel
+       ( Scene(..), View(..), tracePixel, newSamples
        ) where
 
 import Control.Applicative
@@ -29,8 +29,29 @@ eyeRay (View w h f) x y = Ray orig (normalize dir)
               (negate f)
 
 
-shade :: Int -> (Ray -> Color) -> Scene -> Ray -> Material -> Patch -> Color
-shade sampleCount tracer scene ray material (pos, n) =
+type Samples = (Int, [V3])
+
+shrink :: Samples -> Samples
+shrink (c, s) = (newCount, take newCount s)
+  where
+    newCount = floor $ sqrt $ ((fromIntegral c) :: Double)
+
+newSamples :: Int -> Samples
+newSamples c = (c, unsafePerformIO (randomNormals c))
+
+-- | <TODO>: non random
+randomNormals :: Int -> IO [V3]
+randomNormals n = mapM (const (normalize <$> randomV3)) [1..n * 3]
+    where
+      randomV3 = liftM3 V3 f f f
+      f = (\x -> 2 * x - 1) <$> randomIO
+
+-- | Skip computing ray with dot product less that threshold
+skipThreshold :: Double
+skipThreshold = 0.2
+
+shade :: Samples -> (Ray -> Color) -> Scene -> Ray -> Material -> Patch -> Color
+shade samples tracer scene ray material (pos, n) =
     luminosity material + ambientComp + diffComp + specComp + indirectComp
     where
       ambientComp = ambientK material .* ambientColor scene
@@ -52,33 +73,25 @@ shade sampleCount tracer scene ray material (pos, n) =
 
       degrees (V3 r g b) s = V3 (r ** s) (g ** s) (b ** s)
 
-      indirectComp = (0.002 * ambientK material)
-                     .* sum (map tracer indirectRays)
+      indirectComp = (coeff * ambientK material) .* sum (map tracer indirectRays)
+        where
+          coeff = 1 / fromIntegral (fst samples)
+
       indirectRays = map (\stoh -> Ray (pos + (0.001 .* n)) stoh) $
-                         filter (\nr -> (nr .*. n) > 0) $
-                         unsafePerformIO (randomNormals 500)
-                                          where s = unsafePerformIO ((print sampleCount) >>
-                                                    return sampleCount)
+                         filter (\nr -> (nr .*. n) > skipThreshold) $ snd samples
 
--- | <TODO>: non random
-randomNormals :: Int -> IO [V3]
-randomNormals n = mapM (const (normalize <$> randomV3)) [1..n * 3]
-    where
-      randomV3 = liftM3 V3 f f f
-      f = (\x -> 2 * x - 1) <$> randomIO
-
-raytrace :: Int -> Int -> Scene -> Ray -> Color
-raytrace _ 0 scene _ = V3 0 0 0
-raytrace sampleCount depth scene ray =
+raytrace :: Samples -> Int -> Scene -> Ray -> Color
+raytrace _       0      _    _   = V3 0 0 0
+raytrace samples depth scene ray =
     case findIntersection ray (objects scene) of
       Nothing -> backgroundColor scene
       Just (Object material _, patch) ->
-          shade sampleCount tracer scene ray material patch
+          shade samples tracer scene ray material patch
     where
-      tracer = raytrace sampleCount (pred depth) scene
+      tracer = raytrace (shrink samples) (pred depth) scene
 
 
-tracePixel :: Scene -> View -> Int -> Int -> Int -> Int -> Color
+tracePixel :: Scene -> View -> Samples -> Int -> Int -> Int -> Color
 tracePixel scene view samples depth x y = raytrace samples depth scene initialRay
     where
       initialRay = eyeRay view x y

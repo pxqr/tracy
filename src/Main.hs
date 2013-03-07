@@ -91,7 +91,7 @@ main = getArgs >>= parseArgs >>= handleArgs
 
 runTracer :: (Int, Int) -> Scene -> Int -> Int -> Image PixelRGB8
 runTracer (w, h) scene samples depth = let view  = View w h (-1) in
-    generateImage (\x y -> vecToColor (tracePixel scene view samples depth x y)) w h
+    generateImage (\x y -> vecToColor (tracePixel scene view (newSamples samples) depth x y)) w h
   where
     toLDR :: Double -> Double
     toLDR x = ((1 / (1 + exp (-x))) - 0.5) * 2
