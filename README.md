@@ -20,10 +20,10 @@ Scene configuration:
 This picture is obtained with the following args:
 
 ``` bash
-$ tracy --size=800x800 --samples=1000 --depth=3 --output=examples/800x800-1000-3.bmp
+$ tracy --size=400x400 --samples=1000 --depth=3 --output=examples/400x400-1000-3.bmp
 ```
 
-<image here>
+![sample image](https://github.com/fmap/tracy/raw/master/examples/400x400-1000-3.bmp "Sample image")
 
 How this image is generated:
 
