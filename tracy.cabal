@@ -27,7 +27,7 @@ executable tracy
                      , JuicyPixels == 3.*
 
   hs-source-dirs:      src
-  ghc-options:         -Wall -rtsopts -O2 -fllvm
+  ghc-options:         -Wall -O2
 
 
 library
