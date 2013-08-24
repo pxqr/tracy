@@ -23,7 +23,7 @@ This picture is obtained with the following args:
 $ tracy --size=400x400 --samples=1000 --depth=3 --output=examples/400x400-1000-3.bmp
 ```
 
-![sample image](https://github.com/fmap/tracy/raw/master/examples/400x400-1000-3.bmp "Sample image")
+![sample image](examples/400x400-1000-3.bmp "Sample image")
 
 How this image is generated:
 
@@ -35,7 +35,7 @@ Reflections are computed similarly. I hope it's clear now what does mean that op
 
 # Build Status
 
-[![Build Status](https://travis-ci.org/fmap/tracy.png)](https://travis-ci.org/fmap/tracy)
+[![Build Status](https://travis-ci.org/pxqr/tracy.png)](https://travis-ci.org/pxqr/tracy)
 
 # Future
 
