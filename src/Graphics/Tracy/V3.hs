@@ -5,13 +5,12 @@ module Graphics.Tracy.V3
        , Normal
        , Position
        , Patch
-       , Color
 
-       , from256
        , len
        , norm
        , normalize
        , distance
+       , avg
 
        , (.*)
        , (.*.)
@@ -37,7 +36,6 @@ data Ray = Ray
 type Normal   = V3
 type Position = V3
 type Patch    = (Position, Normal)
-type Color    = V3
 
 instance Num V3 where
     V3 x y z + V3 x' y' z' = V3 (x + x') (y + y') (z + z')
@@ -52,10 +50,6 @@ instance Num V3 where
     fromInteger x = V3 (fromInteger x) (fromInteger x) (fromInteger x)
     abs = error "abs"
     signum = error "signum"
-
-
-from256 :: Double -> Double -> Double -> Color
-from256 x y z = V3 (x / 255) (y / 255) (z / 255)
 
 norm :: V3 -> Double
 norm (V3 x y z) = x * x + y * y + z * z
@@ -85,6 +79,9 @@ s .* V3 x y z = V3 (s * x) (s * y) (s * z)
 {-# INLINE (.*) #-}
 
 infix 7 .*
+
+avg :: V3 -> V3 -> V3
+avg a b = 0.5 .* (a + b)
 
 
 projection :: V3 -> V3 -> V3

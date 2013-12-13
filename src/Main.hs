@@ -14,9 +14,10 @@ import Data.List
 import Data.Maybe
 import Data.Version (showVersion)
 
-import Graphics.Tracy.V3
+import Graphics.Tracy.Color
 import Graphics.Tracy.Tracer
 import Graphics.Tracy.Scene
+import Graphics.Tracy.V3
 
 
 data Options = Options {
@@ -96,5 +97,5 @@ runTracer (w, h) scene samples depth = let view  = View w h (-1) in
     toLDR x = ((1 / (1 + exp (-x))) - 0.5) * 2
 
     vecToColor :: Color -> PixelRGB8
-    vecToColor (V3 r g b) = PixelRGB8 (conv r) (conv g) (conv b)
+    vecToColor (Color (V3 r g b)) = PixelRGB8 (conv r) (conv g) (conv b)
         where conv x = floor (255 * toLDR x)

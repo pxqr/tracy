@@ -5,6 +5,7 @@ module Graphics.Tracy.Material
 
 import Data.Default
 
+import Graphics.Tracy.Color
 import Graphics.Tracy.Prim
 import Graphics.Tracy.V3
 
@@ -24,8 +25,8 @@ instance Default Material where
     , diffuseK   = 1
     , specularK  = 0.01
     , shiness    = 2
-    , luminosity = V3 0 0 0
-    , diffuse    = V3 0.5 0.5 0.5
+    , luminosity = black
+    , diffuse    = gray
     }
 
 data Object = Object

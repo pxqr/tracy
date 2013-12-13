@@ -4,10 +4,11 @@ module Graphics.Tracy.Scene
 
 import Data.Default
 
-import Graphics.Tracy.V3
-import Graphics.Tracy.Prim
-import Graphics.Tracy.Material
+import Graphics.Tracy.Color
 import Graphics.Tracy.Light
+import Graphics.Tracy.Material
+import Graphics.Tracy.Prim
+import Graphics.Tracy.V3
 
 
 data Scene = Scene
@@ -17,53 +18,55 @@ data Scene = Scene
   , objects           :: [Object]
   }
 
+
 instance Default Scene where
   def = Scene
     { backgroundColor = from256 (210 * 3) (220 * 3) (250 * 3)
-    , ambientColor    = V3 0.0  0.0  0.0
+    , ambientColor    = black
     , bulbs = concat
-      [ lightLine 1 (Light 3000 (V3 (-1000) 1000 0) (V3 1.0 1.0 1.0))
+      [ lightLine 1 (Light 3000 (V3 (-1000) 1000 0) white)
                                 (V3 (-1000) 1000 10)
       ]
 
             , objects =
                 [ Object { -- ground plane
-                    mat = def { diffuse = from256 100 100 100 }
+                    mat = def { diffuse = gray }
                   , obj = Primitive $ Plane (V3 0 1 0) 5
                   }
 
                 , Object { -- central ball
-                    mat = def { diffuse = from256 252 152 133
-                                          , specularK = 0.001
-                                          }
+                    mat = def { diffuse   = red
+                              , specularK = 0.001
+                              }
                   , obj = Primitive $ Sphere (V3 0 0 25) 5
                   }
 
                 , Object { -- left ball
-                    mat = def { diffuse = from256 252 255 100 }
+                    mat = def { diffuse = yellow }
                   , obj = Primitive $ Sphere (V3 (-16) 6 26) 12
                   }
 
                 , Object { -- light ball
-                    mat = def { diffuse = from256 252 255 255
-                                          , luminosity = V3 20 20 20 }
+                    mat = def { diffuse = white
+                              , luminosity = gray
+                              }
                   , obj = Primitive $ Sphere (V3 5 (-4) 20) 1
                   }
 
 
                 , Object { -- big ball
-                    mat = def { diffuse = from256 255 147 187 }
+                    mat = def { diffuse = red }
                   , obj = Primitive $ Sphere (V3 14 3 25) 8
                   }
 
                 , Object { -- big ball
-                    mat = def { diffuse = from256 140 300 187 }
+                    mat = def { diffuse = green }
                   , obj = Primitive $ Sphere (V3 5 11 45) 16
                   }
 
 
                 , Object { -- nearest ball
-                    mat = def { diffuse = from256 254 219 142 }
+                    mat = def { diffuse = magenta }
                   , obj = Primitive $ Sphere (V3 (-2) (-3.8) 12)  1.2
                   }
 

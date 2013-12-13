@@ -11,6 +11,7 @@ import Data.Maybe
 import System.IO.Unsafe
 import System.Random
 
+import Graphics.Tracy.Color
 import Graphics.Tracy.Light
 import Graphics.Tracy.Material
 import Graphics.Tracy.Prim
@@ -56,28 +57,32 @@ skipThreshold = 0.2
 
 shade :: Samples -> (Ray -> Color) -> Scene -> Ray -> Material -> Patch -> Color
 shade samples tracer scene ray material (pos, n) =
-    luminosity material + ambientComp + diffComp + specComp + indirectComp
+      Color $ clr (luminosity material) + ambientComp + diffComp + specComp + indirectComp
     where
-      ambientComp = ambientK material .* ambientColor scene
+      ambientComp :: V3
+      ambientComp = ambientK material .* clr (ambientColor scene)
 
+      diffComp :: V3
       diffComp = diffuseK material .* sum (map diffShader (bulbs scene))
+
       diffShader (Light i lpos lightDiffuse)
           | isNothing $ findIntersection (Ray pos ldir) (objects scene)
               = let cosA    = ldir .*. n
                     recDist = 1 / distance lpos pos
-                in if cosA > 0 then (i * recDist * cosA) .* (lightDiffuse * diffuse material)
+                in if cosA > 0 then (i * recDist * cosA) .*
+                                    (clr lightDiffuse * clr (diffuse material))
                    else 0
           | otherwise = 0
           where
             ldir = normalize (lpos - pos)
 
-      specComp = specularK material .* degrees (tracer reflRay) (shiness material)
+      specComp = specularK material .* degrees (clr (tracer reflRay)) (shiness material)
       reflRay = let refl = reflectionNorm n (direction ray)
                 in  Ray (pos + (0.001 .* n)) refl
 
       degrees (V3 r g b) s = V3 (r ** s) (g ** s) (b ** s)
 
-      indirectComp = (coeff * ambientK material) .* sum (map tracer indirectRays)
+      indirectComp = (coeff * ambientK material) .* sum (map (clr . tracer) indirectRays)
         where
           coeff = 1 / fromIntegral (fst samples)
 
@@ -85,7 +90,7 @@ shade samples tracer scene ray material (pos, n) =
                          filter (\nr -> (nr .*. n) > skipThreshold) $ snd samples
 
 raytrace :: Samples -> Int -> Scene -> Ray -> Color
-raytrace _       0      _    _   = V3 0 0 0
+raytrace _       0      _    _   = black
 raytrace samples depth scene ray =
     case findIntersection ray (objects scene) of
       Nothing -> backgroundColor scene

@@ -3,6 +3,7 @@ module Graphics.Tracy.Light
        , lightLine
        ) where
 
+import Graphics.Tracy.Color
 import Graphics.Tracy.V3
 
 
