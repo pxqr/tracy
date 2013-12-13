@@ -11,11 +11,11 @@ import Data.Maybe
 import System.IO.Unsafe
 import System.Random
 
-import Graphics.Tracy.V3
 import Graphics.Tracy.Light
 import Graphics.Tracy.Material
-import Graphics.Tracy.Traceable
+import Graphics.Tracy.Prim
 import Graphics.Tracy.Scene
+import Graphics.Tracy.V3
 
 
 data View = View

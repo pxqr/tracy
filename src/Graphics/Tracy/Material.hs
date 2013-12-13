@@ -5,7 +5,6 @@ module Graphics.Tracy.Material
        ) where
 
 import Graphics.Tracy.Prim
-import Graphics.Tracy.Traceable
 import Graphics.Tracy.V3
 
 
