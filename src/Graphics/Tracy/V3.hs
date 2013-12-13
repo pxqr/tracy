@@ -4,7 +4,6 @@ module Graphics.Tracy.V3
        , Ray(..)
        , Normal
        , Position
-       , Patch
 
        , len
        , norm
@@ -35,7 +34,6 @@ data Ray = Ray
 
 type Normal   = V3
 type Position = V3
-type Patch    = (Position, Normal)
 
 instance Num V3 where
     V3 x y z + V3 x' y' z' = V3 (x + x') (y + y') (z + z')

@@ -1,8 +1,12 @@
 {-# LANGUAGE ExistentialQuantification #-}
 -- | Set of graphic primitives.
 module Graphics.Tracy.Prim
-       ( Traceable(..)
+       ( -- * Intersection
+         Traceable(..)
+       , Patch
        , findIntersection
+
+         -- * Primitives
        , Sphere(..)
        , Plane(..)
        , Primitive(..)
@@ -16,14 +20,18 @@ import Data.Ord
 import Graphics.Tracy.V3
 
 
+type Patch    = (Position, Normal)
+
 class Traceable t where
   intersection :: Ray -> t -> Maybe Patch
 
 findIntersection :: Traceable t => Ray -> [t] -> Maybe (t, Patch)
-findIntersection ray objs =
-    let intersections = mapMaybe (\x -> ((,) x) <$> intersection ray x) objs
-    in if null intersections then Nothing else Just $
-       minimumBy (comparing (distance (origin ray) . fst . snd)) intersections
+findIntersection ray objs
+    | null intersections = Nothing
+    |     otherwise      = Just $
+     minimumBy (comparing (distance (origin ray) . fst . snd)) intersections
+  where
+    intersections = mapMaybe (\x -> ((,) x) <$> intersection ray x) objs
 
 data Plane = Plane
   { planeNormal   :: Normal
