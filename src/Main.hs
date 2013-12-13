@@ -9,9 +9,10 @@ import System.Console.GetOpt
 import System.FilePath ()
 
 import Paths_tracy (version)
-import Data.Version (showVersion)
+import Data.Default
 import Data.List
 import Data.Maybe
+import Data.Version (showVersion)
 
 import Graphics.Tracy.V3
 import Graphics.Tracy.Tracer
@@ -28,17 +29,16 @@ data Options = Options {
     , optSamples   :: Int
     } deriving (Show, Eq)
 
-
-defaultOptions :: Options
-defaultOptions = Options {
-                   optVersion = False
-                 , optHelp    = False
-                 , optInput   = Nothing
-                 , optOutput  = "out.bmp"
-                 , optImageSize = (400, 400)
-                 , optDepth   = 1
-                 , optSamples = 50
-                 }
+instance Default Options where
+  def = Options
+    { optVersion = False
+    , optHelp    = False
+    , optInput   = Nothing
+    , optOutput  = "out.bmp"
+    , optImageSize = (400, 400)
+    , optDepth   = 1
+    , optSamples = 50
+    }
 
 options :: [OptDescr (Options -> Options)]
 options =
@@ -64,25 +64,24 @@ options =
           readDim xs = let (a, b) = splitAt (fromJust (findIndex (=='x') xs)) xs
                        in (read a, read (tail b))
 
-
-
 parseArgs :: [String] -> IO Options
 parseArgs argv =
     case getOpt Permute options argv of
-      (o, n, []) -> if null n
-                    then return $ foldl (flip id) defaultOptions o
-                    else ioError $ userError $ "Unable to handle options: " ++ concat n
-      (_, _, e)  -> ioError $ userError $ concat e ++ usage
+      (o, n, [])
+        | null n    -> return $ foldl (flip id) def o
+        | otherwise -> ioError $ userError $
+                          "Unable to handle options: " ++ concat n
+      (_, _, e)     -> ioError $ userError $ concat e ++ usage
     where
       usage = usageInfo "" options
-
 
 handleArgs :: Options -> IO ()
 handleArgs opts
     | optVersion opts = putStrLn (showVersion version)
     | optHelp    opts = putStrLn (usageInfo "" options)
     |    otherwise    = do
-      let bitmap = runTracer (optImageSize opts) defaultScene (optSamples opts) (optDepth opts)
+      let bitmap = runTracer (optImageSize opts) def
+                             (optSamples opts) (optDepth opts)
       writeBitmap (optOutput opts) bitmap
 
 
