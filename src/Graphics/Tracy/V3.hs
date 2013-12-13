@@ -1,26 +1,43 @@
 -- | Three component vector of doubles.
 module Graphics.Tracy.V3
-       ( V3(..), Ray(..), Normal, Position, Patch, Color
+       ( V3(..)
+       , Ray(..)
+       , Normal
+       , Position
+       , Patch
+       , Color
+
        , from256
-       , len, norm, normalize, distance
-       , (.*), (.*.), (.^.)
-       , projection, projectionNorm, reflectionNorm
+       , len
+       , norm
+       , normalize
+       , distance
+
+       , (.*)
+       , (.*.)
+       , (.^.)
+
+       , projection
+       , projectionNorm
+       , reflectionNorm
        , someBasis
        ) where
 
-data V3 = V3 { _x :: {-# UNPACK #-} !Double
-             , _y :: {-# UNPACK #-} !Double
-             , _z :: {-# UNPACK #-} !Double
-             } deriving (Show, Read, Eq)
+data V3 = V3
+  { _x :: {-# UNPACK #-} !Double
+  , _y :: {-# UNPACK #-} !Double
+  , _z :: {-# UNPACK #-} !Double
+  } deriving (Show, Read, Eq)
 
-data Ray = Ray { origin    :: Position
-               , direction :: Normal
-               } deriving (Show, Read)
+data Ray = Ray
+  { origin    :: Position
+  , direction :: Normal
+  } deriving (Show, Read)
 
-type Normal = V3
+type Normal   = V3
 type Position = V3
-type Patch = (Position, Normal)
-type Color = V3
+type Patch    = (Position, Normal)
+type Color    = V3
 
 instance Num V3 where
     V3 x y z + V3 x' y' z' = V3 (x + x') (y + y') (z + z')
@@ -40,14 +57,14 @@ instance Num V3 where
 from256 :: Double -> Double -> Double -> Color
 from256 x y z = V3 (x / 255) (y / 255) (z / 255)
 
--- | Length of vector.
-len :: V3 -> Double
-len (V3 x y z) = sqrt (x * x + y * y + z * z)
-{-# INLINE len #-}
-
 norm :: V3 -> Double
 norm (V3 x y z) = x * x + y * y + z * z
 {-# INLINE norm #-}
+
+-- | Length of vector.
+len :: V3 -> Double
+len = sqrt . norm
+{-# INLINE len #-}
 
 -- | Scale vector such that length becomes 1.
 normalize :: V3 -> Normal
@@ -84,9 +101,10 @@ reflectionNorm n d = d - (2 * (d .*. n)) .* n
 
 -- | Cross product.
 (.^.) :: V3 -> V3 -> V3
-V3 a1 a2 a3 .^. V3 b1 b2 b3 = V3 (a2 * b3 - a3 * b2)
-                                 (a3 * b1 - a1 * b3)
-                                 (a1 * b2 - a2 * b1)
+V3 a1 a2 a3 .^. V3 b1 b2 b3 = V3
+  (a2 * b3 - a3 * b2)
+  (a3 * b1 - a1 * b3)
+  (a1 * b2 - a2 * b1)
 {-# INLINE (.^.) #-}
 
 -- | Find a basis from a vector. (one possible)

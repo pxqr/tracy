@@ -9,20 +9,21 @@ import Graphics.Tracy.Material
 import Graphics.Tracy.Light
 
 
-data Scene = Scene { backgroundColor   :: Color
-                   , ambientColor      :: Color
-                   , bulbs             :: [Light]
-                   , objects           :: [Object]
-                   }
+data Scene = Scene
+  { backgroundColor   :: Color
+  , ambientColor      :: Color
+  , bulbs             :: [Light]
+  , objects           :: [Object]
+  }
 
 defaultScene :: Scene
-defaultScene = Scene {
-              backgroundColor = from256 (210 * 3) (220 * 3) (250 * 3)
-            , ambientColor    = V3 0.0  0.0  0.0
-            , bulbs = concat
-                [ lightLine 1 (Light 3000 (V3 (-1000) 1000 0) (V3 1.0 1.0 1.0))
+defaultScene = Scene
+  { backgroundColor = from256 (210 * 3) (220 * 3) (250 * 3)
+  , ambientColor    = V3 0.0  0.0  0.0
+  , bulbs = concat
+      [ lightLine 1 (Light 3000 (V3 (-1000) 1000 0) (V3 1.0 1.0 1.0))
                                 (V3 (-1000) 1000 10)
-                ]
+      ]
 
             , objects =
                 [ Object { -- ground plane

@@ -1,5 +1,8 @@
 module Graphics.Tracy.Tracer
-       ( Scene(..), View(..), tracePixel, newSamples
+       ( Scene(..)
+       , View(..)
+       , tracePixel
+       , newSamples
        ) where
 
 import Control.Applicative
@@ -15,10 +18,11 @@ import Graphics.Tracy.Traceable
 import Graphics.Tracy.Scene
 
 
-data View = View { width      :: Int
-                 , height     :: Int
-                 , focus      :: Double
-                 }
+data View = View
+  { width      :: Int
+  , height     :: Int
+  , focus      :: Double
+  }
 
 eyeRay :: View -> Int -> Int -> Ray
 eyeRay (View w h f) x y = Ray orig (normalize dir)

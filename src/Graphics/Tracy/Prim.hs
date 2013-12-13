@@ -2,33 +2,34 @@
 -- | Set of graphic primitives.
 module Graphics.Tracy.Prim
        ( Traceable(..)
-       , Sphere(..), Plane(..), Primitive(..)
+       , Sphere(..)
+       , Plane(..)
+       , Primitive(..)
        ) where
 
 import Graphics.Tracy.Traceable
 import Graphics.Tracy.V3
 
 
-data Plane = Plane { planeNormal   :: Normal
-                   , planeDistance :: Double
-                   } deriving (Show, Read)
-
+data Plane = Plane
+  { planeNormal   :: Normal
+  , planeDistance :: Double
+  } deriving (Show, Read)
 
 instance Traceable Plane where
   intersection (Ray r0 rd) (Plane pn pd) =
-          let vd = pn .*. rd in
-          if vd >= 0 then Nothing
-          else
-              let t = (-(pn .*. r0 + pd)) / vd in
-                  if t > 0
-                  then let point = r0 + (t .* rd) in Just (point, pn)
-                  else Nothing
+    let vd = pn .*. rd in
+    if vd >= 0 then Nothing
+      else
+        let t = (-(pn .*. r0 + pd)) / vd in
+          if t > 0
+          then let point = r0 + (t .* rd) in Just (point, pn)
+          else Nothing
 
-
-
-data Sphere = Sphere { center :: Position
-                     , radius :: Double
-                     } deriving (Show, Read)
+data Sphere = Sphere
+  { center :: Position
+  , radius :: Double
+  } deriving (Show, Read)
 
 sphereMult :: Normal -> Sphere -> Maybe Double
 sphereMult ray (Sphere c r) =
@@ -43,12 +44,12 @@ sphereMult ray (Sphere c r) =
 
 instance Traceable Sphere where
   intersection (Ray p d) (Sphere c r) =
-        let  vpc = c - p
-        in if d .*. vpc < 0 then Nothing
-           else case sphereMult d (Sphere vpc r) of
-                  Just di1 -> let pos  = p + di1 .* d
-                              in Just (pos, normalize (pos - c))
-                  Nothing  -> Nothing
+    let  vpc = c - p
+    in if d .*. vpc < 0 then Nothing
+       else case sphereMult d (Sphere vpc r) of
+              Just di1 -> let pos  = p + di1 .* d
+                          in Just (pos, normalize (pos - c))
+              Nothing  -> Nothing
 
 -- <TODO> Triangles.
 
