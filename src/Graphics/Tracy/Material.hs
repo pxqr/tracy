@@ -1,13 +1,13 @@
 module Graphics.Tracy.Material
        ( Material(..)
        , Object(..)
+       , (<.>)
        ) where
 
 import Data.Default
 
 import Graphics.Tracy.Color
 import Graphics.Tracy.Prim
-import Graphics.Tracy.V3
 
 
 data Material = Material
@@ -15,8 +15,8 @@ data Material = Material
   , diffuseK   :: Double
   , specularK  :: Double
   , shiness    :: Double
-  , luminosity :: Color
   , diffuse    :: Color
+  , luminosity :: Color
   } deriving (Show, Read)
 
 instance Default Material where
@@ -25,8 +25,8 @@ instance Default Material where
     , diffuseK   = 1
     , specularK  = 0.01
     , shiness    = 2
-    , luminosity = black
     , diffuse    = gray
+    , luminosity = black
     }
 
 data Object = Object
@@ -37,3 +37,7 @@ data Object = Object
 
 instance Traceable Object where
     intersection r (Object _ o) = intersection r o
+
+(<.>) :: Traceable a => a -> Material -> Object
+p <.> m = Object m (Primitive p)
+{-# INLINE (<.>) #-}

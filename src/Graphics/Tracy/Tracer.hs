@@ -1,6 +1,5 @@
 module Graphics.Tracy.Tracer
-       ( Scene(..)
-       , View(..)
+       ( View(..)
        , tracePixel
        , newSamples
        ) where
