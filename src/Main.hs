@@ -81,17 +81,18 @@ handleArgs opts
     | optVersion opts = putStrLn (showVersion version)
     | optHelp    opts = putStrLn (usageInfo "" options)
     |    otherwise    = do
-      let bitmap = runTracer (optImageSize opts) def
-                             (optSamples opts) (optDepth opts)
+      envMap <- randomNormals (optSamples opts)
+      let bitmap = runTracer (optImageSize opts) def envMap (optDepth opts)
       writeBitmap (optOutput opts) bitmap
 
 
 main :: IO ()
 main = getArgs >>= parseArgs >>= handleArgs
 
-runTracer :: (Int, Int) -> Scene -> Int -> Int -> Image PixelRGB8
-runTracer (w, h) scene samples depth = let view  = View w h (-1) in
-    generateImage (\x y -> vecToColor (tracePixel scene view (newSamples samples) depth x y)) w h
+runTracer :: (Int, Int) -> Scene -> Samples -> Int -> Image PixelRGB8
+runTracer (w, h) scene samples depth =
+    let view  = View w h (-1) in
+    generateImage (\x y -> vecToColor (tracePixel scene view samples depth x y)) w h
   where
     toLDR :: Double -> Double
     toLDR x = ((1 / (1 + exp (-x))) - 0.5) * 2
