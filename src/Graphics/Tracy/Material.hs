@@ -7,7 +7,7 @@ module Graphics.Tracy.Material
 import Data.Default
 
 import Graphics.Tracy.Color
-import Graphics.Tracy.Prim
+import Graphics.Tracy.Geometry
 
 
 data Material = Material
@@ -32,12 +32,21 @@ instance Default Material where
 data Object = Object
   { --objID :: Int
     mat :: Material
-  , obj :: Primitive
+  , obj :: SomePrim
   }
 
 instance Traceable Object where
-    intersection r (Object _ o) = intersection r o
+  intersection r (Object _ o) = intersection r o
+  {-# INLINE intersection #-}
 
-(<.>) :: Traceable a => a -> Material -> Object
-p <.> m = Object m (Primitive p)
+instance HasVolume Object where
+  boundingBox = boundingBox . obj
+  {-# INLINE boundingBox #-}
+
+(<.>) :: HasVolume a => Traceable a => a -> Material -> Object
+p <.> m = Object m (SomePrim p)
 {-# INLINE (<.>) #-}
+
+--annotateHierarhy :: [Material] -> Composite SomePrim -> Composite SomePrim
+--annotateHierarhy Empty = Empty
+--annotateHierarhy _     = undefined

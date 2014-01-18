@@ -14,7 +14,7 @@ import System.Random
 import Graphics.Tracy.Color
 import Graphics.Tracy.Light
 import Graphics.Tracy.Material
-import Graphics.Tracy.Prim
+import Graphics.Tracy.Geometry
 import Graphics.Tracy.Scene
 import Graphics.Tracy.V3
 

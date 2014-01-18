@@ -5,6 +5,9 @@ module Graphics.Tracy.V3
        , Normal
        , Position
 
+       , maxComp
+       , minComp
+
        , len
        , norm
        , normalize
@@ -21,6 +24,9 @@ module Graphics.Tracy.V3
        , someBasis
        ) where
 
+import System.Random
+
+
 data V3 = V3
   { _x :: {-# UNPACK #-} !Double
   , _y :: {-# UNPACK #-} !Double
@@ -28,12 +34,31 @@ data V3 = V3
   } deriving (Show, Read, Eq)
 
 data Ray = Ray
-  { origin    :: Position
-  , direction :: Normal
+  { origin    :: !Position
+  , direction :: !Normal
   } deriving (Show, Read)
 
 type Normal   = V3
 type Position = V3
+
+minDouble :: Double
+minDouble = -100000000000000000 -- FIXME
+
+maxDouble :: Double
+maxDouble =  100000000000000000 -- FIXME
+
+instance Bounded V3 where
+  minBound = V3 minDouble minDouble minDouble
+  maxBound = V3 maxDouble maxDouble maxDouble
+
+instance Random V3 where
+  randomR (V3 lox loy loz, V3 hix hiy hiz) g =
+    let (x, g')   = randomR (lox, hix) g
+        (y, g'')  = randomR (loy, hiy) g'
+        (z, g''') = randomR (loz, hiz) g''
+    in (V3 x y z, g''')
+
+  random  = randomR (minBound, maxBound)
 
 instance Num V3 where
     V3 x y z + V3 x' y' z' = V3 (x + x') (y + y') (z + z')
@@ -46,8 +71,26 @@ instance Num V3 where
     {-# INLINE (*) #-}
 
     fromInteger x = V3 (fromInteger x) (fromInteger x) (fromInteger x)
-    abs = error "abs"
-    signum = error "signum"
+    abs = error "V3.abs"
+    signum = error "V3.signum"
+
+zipV3 :: (Double -> Double -> Double) -> V3 -> V3 -> V3
+zipV3 f (V3 x y z) (V3 x' y' z') = V3 (f x x') (f y y') (f z z')
+{-# INLINE zipV3 #-}
+
+instance Ord V3 where
+  min = zipV3 min
+  max = zipV3 max
+
+instance Fractional V3 where
+  (/) = zipV3 (/)
+
+maxComp :: V3 -> Double
+maxComp (V3 x y z) = max x (max y z)
+
+minComp :: V3 -> Double
+minComp (V3 x y z) = min x (min y z)
+
 
 norm :: V3 -> Double
 norm (V3 x y z) = x * x + y * y + z * z

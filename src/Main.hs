@@ -4,6 +4,7 @@ module Main (main) where
 import Codec.Picture.Bitmap
 import Codec.Picture.Types
 
+import Control.Exception
 import System.Environment
 import System.Console.GetOpt
 import System.FilePath ()
@@ -82,7 +83,10 @@ handleArgs opts
     | optHelp    opts = putStrLn (usageInfo "" options)
     |    otherwise    = do
       envMap <- randomNormals (optSamples opts)
-      let bitmap = runTracer (optImageSize opts) def envMap (optDepth opts)
+      putStrLn "optimizing BVH..."
+      scene  <- evaluate def
+      putStrLn "rendering scene..."
+      let bitmap = runTracer (optImageSize opts) scene envMap (optDepth opts)
       writeBitmap (optOutput opts) bitmap
 
 
