@@ -2,19 +2,21 @@
 {-# LANGUAGE RecordWildCards           #-}
 -- | Set of geometric objects.
 module Graphics.Tracy.Geometry
-       ( -- * Ray-prim intersection
-         Patch
+       ( -- * Bounding volume
+         BoundingVolume (..)
+       , AABB (..)
        , HasVolume (..)
-       , Traceable (..)
-       , findIntersection
+       , overlap
+       , volume
+
+         -- * Ray intersection
+       , Patch
+       , Primitive (..)
        , SomePrim  (..)
 
          -- * Primitives
        , Sphere (..)
        , Plane (..)
-
-         -- * Composite
-       , Composite (Tip)
        ) where
 
 import Control.Applicative
@@ -40,6 +42,8 @@ data AABB = AABB
   } deriving (Show, Read, Eq)
 
 --instance Ord AABB where
+instance Primitive AABB where
+  intersection ray AABB {..} = Nothing
 
 instance BoundingVolume AABB where
   testIntersection Ray {..} AABB {..} =
@@ -73,7 +77,7 @@ volume :: AABB -> Double
 volume AABB {..} = abs (x * y * z)
   where V3 x y z = leftBottom - rightTop
 
--- TODO use it in composite object contstruction
+-- TODO use it in composite object contstruction to reduce footprint
 tryShare :: Eq a => (a -> a -> a) -> a -> a -> a
 tryShare f a b
   |   r == a  = a
@@ -82,24 +86,24 @@ tryShare f a b
   where
     r = f a b
 
-{-----------------------------------------------------------------------
---  Geometry object classes
------------------------------------------------------------------------}
-
-type Patch    = (Position, Normal)
-
 class HasVolume a where
   boundingBox :: a -> AABB
 
 instance HasVolume AABB where
   boundingBox = id
 
-class Traceable t where
-  intersection   :: Ray -> t -> Maybe Patch
+{-----------------------------------------------------------------------
+--  Geometry object classes
+-----------------------------------------------------------------------}
 
-data SomePrim = forall t. (Traceable t, HasVolume t) => SomePrim t
+type Patch = (Position, Normal)
 
-instance Traceable SomePrim where
+class Primitive t where
+  intersection :: Ray -> t -> Maybe Patch
+
+data SomePrim = forall t. (Primitive t, HasVolume t) => SomePrim t
+
+instance Primitive SomePrim where
   intersection r (SomePrim p) = intersection r p
 
 instance HasVolume SomePrim where
@@ -117,7 +121,7 @@ data Plane = Plane
 instance HasVolume Plane where
   boundingBox _ = mempty
 
-instance Traceable Plane where
+instance Primitive Plane where
   intersection (Ray r0 rd) (Plane pn pd) =
     let vd = pn .*. rd in
     if vd >= 0 then Nothing
@@ -147,7 +151,7 @@ sphereMult ray (Sphere c r) =
            in Just di1
 
 
-instance Traceable Sphere where
+instance Primitive Sphere where
   intersection (Ray p d) (Sphere c r) =
     let  vpc = c - p
     in if d .*. vpc < 0 then Nothing
@@ -163,73 +167,3 @@ instance HasVolume Sphere where
     }
 
 -- TODO Triangles
-
-{-----------------------------------------------------------------------
---  Composite
------------------------------------------------------------------------}
-
-findIntersection :: Traceable a => Ray -> [a] -> Maybe (a, Patch)
-findIntersection ray objs
-    | null intersections = Nothing
-    |     otherwise      = Just $
-     minimumBy (comparing (distance (origin ray) . fst . snd)) intersections
-  where
-    intersections = mapMaybe (\x -> ((,) x) <$> intersection ray x) objs
-
--- | Bounding volume hierarhy.
-data Composite a
-  = Empty
-  | Tip   !a
-  | Aside !AABB !(Composite a) !(Composite a)
-
-instance Traceable a => Traceable (Composite a) where
-  intersection r (Tip        s) = intersection r s
-  intersection r (Aside bb a b)
-    | testIntersection r bb = intersection r a <|> intersection r b
-    |        otherwise      = Nothing
-
-instance HasVolume a => HasVolume (Composite a) where
-  boundingBox  Empty         = mempty
-  boundingBox (Tip        a) = boundingBox a
-  boundingBox (Aside bb _ _) = bb
-
-instance HasVolume a => Monoid (Composite a) where
-  mempty  = Empty
-  mappend Empty a = a
-  mappend a Empty = a
-  mappend a b     = merge a b
-
--- O(1) smart constructor
-aside :: HasVolume a => Composite a -> Composite a -> Composite a
-aside a b = Aside (boundingBox a <> boundingBox b) a b
-
-leafs :: Composite a -> [a]
-leafs  Empty        = []
-leafs (Tip       a) = [a]
-leafs (Aside _ l r) = leafs l ++ leafs r
-
-childOverlap :: HasVolume a => Composite a -> Double
-childOverlap  Empty  = 0
-childOverlap (Tip _) = 0
-childOverlap (Aside _ l r) = volume (boundingBox l `overlap` boundingBox r)
-
--- O(n)
-insertTip :: HasVolume a => a -> Composite a -> Composite a
-insertTip a  Empty              = Tip a
-insertTip a (Tip          b )   = aside (Tip a) (Tip b)
-insertTip a (Aside bb  l  r )
-  | childOverlap lw <= childOverlap rw = lw
-  |               otherwise            = rw
-  where
-    lw = aside l (insertTip a r)
-    rw = aside (insertTip  a l) r
-
--- overlapping minization strategy
--- O(n ^ 2)
-merge :: HasVolume a => Composite a -> Composite a -> Composite a
-merge      Empty          b = b
-merge     (Tip   a     )  b = insertTip a b
-merge a @ (Aside _  _ _)  b = foldr insertTip b (leafs a)
-
---(===) :: Sphere -> Sphere -> Composite
---(===) = undefined

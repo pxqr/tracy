@@ -3,6 +3,9 @@ module Graphics.Tracy.Color
          Color (..)
        , from256
 
+       , Alpha
+       , blending
+
          -- * Literals
        , white
        , gray
@@ -37,6 +40,14 @@ instance Default Color where
 instance Monoid Color where
   mempty      = gray
   mappend (Color a) (Color b) = Color (avg a b)
+
+type Alpha = Double
+
+-- | Linear interpolation.
+blending :: Alpha -> Color -> Color -> Color
+blending alpha (Color a) (Color b) = Color ((alpha .* a) + ((1 - alpha) .* b))
+{-# INLINE blending #-}
+
 
 -- | Build color from an RGB components.
 from256 :: Double -> Double -> Double -> Color

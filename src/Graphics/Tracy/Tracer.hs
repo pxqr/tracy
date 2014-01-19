@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Graphics.Tracy.Tracer
        ( View(..)
        , Samples
@@ -15,6 +16,7 @@ import Graphics.Tracy.Color
 import Graphics.Tracy.Light
 import Graphics.Tracy.Material
 import Graphics.Tracy.Geometry
+import Graphics.Tracy.Object
 import Graphics.Tracy.Scene
 import Graphics.Tracy.V3
 
@@ -71,16 +73,24 @@ shade samples tracer scene ray material (pos, n) =
       diffComp :: V3
       diffComp = diffuseK material .* sum (map diffShader (bulbs scene))
 
-      diffShader (Light i lpos lightDiffuse)
-          | isNothing $ findIntersection (Ray pos ldir) (objects scene)
-              = let cosA    = ldir .*. n
-                    recDist = 1 / distance lpos pos
-                in if cosA > 0 then (i * recDist * cosA) .*
-                                    (clr lightDiffuse * clr (diffuse material))
-                   else 0
-          | otherwise = 0
-          where
-            ldir = normalize (lpos - pos)
+      diffShader (Light i lpos lightDiffuse) =
+          compose $ sortedIntersections (Ray pos ldir) (objects scene)
+        where
+          compose []       = lclr
+          compose ((Object {..}, patch) : xs)
+            {- FIXME blend color of object with light source color -}
+            | Just alpha <- transparent mat = clr (blending alpha black (Color (compose xs)))
+            | otherwise                     = clr black
+
+          ldir = normalize (lpos - pos)
+          lclr =
+            let cosA    = ldir .*. n
+                recDist = 1 / distance lpos pos
+            in if cosA > 0 then (i * recDist * cosA) .*
+                                (clr lightDiffuse * clr (diffuse material))
+               else 0
+
+
 
       specComp = specularK material .* degrees (clr (tracer reflRay)) (shiness material)
       reflRay = let refl = reflectionNorm n (direction ray)
@@ -95,15 +105,20 @@ shade samples tracer scene ray material (pos, n) =
       indirectRays = map (\stoh -> Ray (pos + (0.001 .* n)) stoh) $
                          filter (\nr -> (nr .*. n) > skipThreshold) samples
 
-raytrace :: Samples -> Int -> Scene -> Ray -> Color
-raytrace _       0      _    _   = black
-raytrace samples depth scene ray =
-    case findIntersection ray (objects scene) of
-      Nothing -> backgroundColor scene
-      Just (Object material _, patch) ->
-          shade samples tracer scene ray material patch
-    where
-      tracer = raytrace (shrink samples) (pred depth) scene
+type Depth = Int
+
+raytrace :: Samples -> Depth -> Scene -> Ray -> Color
+raytrace _       0     scene _   = ambientColor scene
+raytrace samples depth scene ray = compose (sortedIntersections ray (objects scene))
+  where
+    tracer = raytrace (shrink samples) (pred depth) scene
+
+    compose [] = backgroundColor scene
+    compose ((Object {..}, patch) : xs)
+      | Just alpha <- transparent mat
+      = blending alpha (shade samples tracer scene ray mat patch) (compose xs)
+      | otherwise = shade samples tracer scene ray mat patch
+
 
 
 tracePixel :: Scene -> View -> Samples -> Int -> Int -> Int -> Color

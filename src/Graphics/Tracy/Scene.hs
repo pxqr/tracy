@@ -13,6 +13,7 @@ import Graphics.Tracy.Color
 import Graphics.Tracy.Light
 import Graphics.Tracy.Material
 import Graphics.Tracy.Geometry
+import Graphics.Tracy.Object
 import Graphics.Tracy.V3
 
 
@@ -20,7 +21,7 @@ data Scene = Scene
   { backgroundColor   :: Color
   , ambientColor      :: Color
   , bulbs             :: [Light]
-  , objects           :: [Object]
+  , objects           :: [BVH]
   }
 
 a = Sphere (V3 0 0 25) 5            <.> def { diffuse = red, specularK = 0.001 }  -- central ball
@@ -40,6 +41,9 @@ spheres = do
   let ss = randomRs (0.3, 1) g
   return $ L.zipWith Sphere ps ss
 
+boxMat :: Material
+boxMat = def { diffuse = red, transparent = Just 0.5 }
+
 instance Default Scene where
   def = Scene
     { backgroundColor = bright blue <> white
@@ -47,6 +51,8 @@ instance Default Scene where
     , bulbs           = sun
     , objects =
       [ groundPlane <.> def { diffuse = gray }
-      , mconcat (Tip <$> L.take 200 (unsafePerformIO spheres)) <.> def
+      , annotate boxMat $ mconcat $ do
+          s <- L.take 200 (unsafePerformIO spheres)
+          return $ s <.> def { transparent = Just 0.5 }
       ]
     }
