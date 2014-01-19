@@ -2,6 +2,7 @@
 module Graphics.Tracy.V3
        ( V3(..)
        , Ray(..)
+       , ray
        , Normal
        , Position
 
@@ -34,9 +35,13 @@ data V3 = V3
   } deriving (Show, Read, Eq)
 
 data Ray = Ray
-  { origin    :: !Position
-  , direction :: !Normal
+  { origin       :: !Position
+  , direction    :: !Normal
+  , invDirection :: !V3
   } deriving (Show, Read)
+
+ray :: Position -> Normal -> Ray
+ray p d = Ray p d (1 / d)
 
 type Normal   = V3
 type Position = V3

@@ -31,7 +31,7 @@ data View = View
   }
 
 eyeRay :: View -> Int -> Int -> Ray
-eyeRay (View w h f) x y = Ray orig (normalize dir)
+eyeRay (View w h f) x y = ray orig (normalize dir)
   where
     orig = V3 0 0 f
     dir  = V3 ((fromIntegral $ x - div w 2) / fromIntegral w)
@@ -64,7 +64,7 @@ skipThreshold = 0.2
 -----------------------------------------------------------------------}
 
 shade :: Samples -> (Ray -> Color) -> Scene -> Ray -> Material -> Patch -> Color
-shade samples tracer scene ray material (pos, n) =
+shade samples tracer scene r material (pos, n) =
       Color $ clr (luminosity material) + ambientComp + diffComp + specComp + indirectComp
     where
       ambientComp :: V3
@@ -74,7 +74,7 @@ shade samples tracer scene ray material (pos, n) =
       diffComp = diffuseK material .* sum (map diffShader (bulbs scene))
 
       diffShader (Light i lpos lightDiffuse) =
-          compose $ sortedIntersections (Ray pos ldir) (objects scene)
+          compose $ sortedIntersections (ray pos ldir) (objects scene)
         where
           compose []       = lclr
           compose ((Object {..}, patch) : xs)
@@ -93,8 +93,8 @@ shade samples tracer scene ray material (pos, n) =
 
 
       specComp = specularK material .* degrees (clr (tracer reflRay)) (shiness material)
-      reflRay = let refl = reflectionNorm n (direction ray)
-                in  Ray (pos + (0.001 .* n)) refl
+      reflRay = let refl = reflectionNorm n (direction r)
+                in  ray (pos + (0.001 .* n)) refl
 
       degrees (V3 r g b) s = V3 (r ** s) (g ** s) (b ** s)
 
@@ -102,22 +102,22 @@ shade samples tracer scene ray material (pos, n) =
         where
           coeff = 2.0 / fromIntegral (L.length samples)
 
-      indirectRays = map (\stoh -> Ray (pos + (0.001 .* n)) stoh) $
+      indirectRays = map (\stoh -> ray (pos + (0.001 .* n)) stoh) $
                          filter (\nr -> (nr .*. n) > skipThreshold) samples
 
 type Depth = Int
 
 raytrace :: Samples -> Depth -> Scene -> Ray -> Color
 raytrace _       0     scene _   = ambientColor scene
-raytrace samples depth scene ray = compose (sortedIntersections ray (objects scene))
+raytrace samples depth scene r = compose (sortedIntersections r (objects scene))
   where
     tracer = raytrace (shrink samples) (pred depth) scene
 
     compose [] = backgroundColor scene
     compose ((Object {..}, patch) : xs)
       | Just alpha <- transparent mat
-      = blending alpha (shade samples tracer scene ray mat patch) (compose xs)
-      | otherwise = shade samples tracer scene ray mat patch
+      = blending alpha (shade samples tracer scene r mat patch) (compose xs)
+      | otherwise = shade samples tracer scene r mat patch
 
 
 

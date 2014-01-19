@@ -47,9 +47,8 @@ instance Primitive AABB where
 
 instance BoundingVolume AABB where
   testIntersection Ray {..} AABB {..} =
-    let dirfrac = 1 / direction -- TODO use recip?
-        tlb     = (leftBottom - origin) * dirfrac
-        trt     = (rightTop   - origin) * dirfrac
+    let tlb     = (leftBottom - origin) * invDirection
+        trt     = (rightTop   - origin) * invDirection
         tmin    = maxComp (min tlb trt)
         tmax    = minComp (max tlb trt)
     in if tmax < 0 then False
@@ -122,13 +121,13 @@ instance HasVolume Plane where
   boundingBox _ = mempty
 
 instance Primitive Plane where
-  intersection (Ray r0 rd) (Plane pn pd) =
-    let vd = pn .*. rd in
+  intersection Ray {..} (Plane pn pd) =
+    let vd = pn .*. direction in
     if vd >= 0 then Nothing
       else
-        let t = (-(pn .*. r0 + pd)) / vd in
+        let t = (-(pn .*. origin + pd)) / vd in
           if t > 0
-          then let point = r0 + (t .* rd) in Just (point, pn)
+          then let point = origin + (t .* direction) in Just (point, pn)
           else Nothing
 
 {-----------------------------------------------------------------------
@@ -152,11 +151,11 @@ sphereMult ray (Sphere c r) =
 
 
 instance Primitive Sphere where
-  intersection (Ray p d) (Sphere c r) =
-    let  vpc = c - p
-    in if d .*. vpc < 0 then Nothing
-       else case sphereMult d (Sphere vpc r) of
-              Just di1 -> let pos  = p + di1 .* d
+  intersection Ray {..} (Sphere c r) =
+    let  vpc = c - origin
+    in if direction .*. vpc < 0 then Nothing
+       else case sphereMult direction (Sphere vpc r) of
+              Just di1 -> let pos  = origin + di1 .* direction
                           in Just (pos, normalize (pos - c))
               Nothing  -> Nothing
 
