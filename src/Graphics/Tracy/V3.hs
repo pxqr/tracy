@@ -84,18 +84,29 @@ zipV3 f (V3 x y z) (V3 x' y' z') = V3 (f x x') (f y y') (f z z')
 {-# INLINE zipV3 #-}
 
 instance Ord V3 where
+  V3 a b c <= V3 a' b' c' = a <= a' && b <= b' && c <= c'
+  {-# INLINE (<=) #-}
+
   min = zipV3 min
+  {-# INLINE min #-}
+
   max = zipV3 max
+  {-# INLINE max #-}
 
 instance Fractional V3 where
   (/) = zipV3 (/)
+  {-# INLINE (/) #-}
+
+  fromRational a = let v = fromRational a in V3 v v v
+  {-# INLINE fromRational #-}
 
 maxComp :: V3 -> Double
 maxComp (V3 x y z) = max x (max y z)
+{-# INLINE maxComp #-}
 
 minComp :: V3 -> Double
 minComp (V3 x y z) = min x (min y z)
-
+{-# INLINE minComp #-}
 
 norm :: V3 -> Double
 norm (V3 x y z) = x * x + y * y + z * z

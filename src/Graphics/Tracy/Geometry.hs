@@ -8,6 +8,8 @@ module Graphics.Tracy.Geometry
        , HasVolume (..)
        , overlap
        , volume
+       , innerSphere
+       , outerSphere
 
          -- * Ray intersection
        , Patch
@@ -37,18 +39,21 @@ class BoundingVolume a where
 
 -- | Axis aligned bounding box.
 data AABB = AABB
-  { rightTop   :: !Position
-  , leftBottom :: !Position
+  { boxOrigin :: !Position
+  , boxSize   :: !V3
   } deriving (Show, Read, Eq)
 
 --instance Ord AABB where
 instance Primitive AABB where
-  intersection ray AABB {..} = Nothing
+  intersection ray aabb = listToMaybe
+    $ sortBy (comparing (distance (origin ray) . fst))
+    $ filter ((aabb `contains`) . fst)
+    $ mapMaybe (intersection ray) $ aabbPlanes aabb
 
 instance BoundingVolume AABB where
   testIntersection Ray {..} AABB {..} =
-    let tlb     = (leftBottom - origin) * invDirection
-        trt     = (rightTop   - origin) * invDirection
+    let tlb     = (boxOrigin           - origin) * invDirection
+        trt     = (boxOrigin + boxSize - origin) * invDirection
         tmin    = maxComp (min tlb trt)
         tmax    = minComp (max tlb trt)
     in if tmax < 0 then False
@@ -57,24 +62,73 @@ instance BoundingVolume AABB where
 
 instance Monoid AABB where
   mempty  = AABB
-    { rightTop   = maxBound
-    , leftBottom = minBound
+    { boxOrigin = 0
+    , boxSize   = 0
     }
 
-  mappend a b = AABB
-    { rightTop   = rightTop   a `min` rightTop   b
-    , leftBottom = leftBottom a `max` leftBottom b
+  mappend a b
+    | boxSize a == 0 = b
+    | boxSize b == 0 = a
+    | otherwise      = AABB
+    { boxOrigin = newOrigin
+    , boxSize   = ((boxOrigin a + boxSize a) `max` (boxOrigin b + boxSize b))
+                - newOrigin
     }
+    where
+      newOrigin = boxOrigin  a `min` boxOrigin  b
 
+type Interval = (Double, Double)
+
+intersectInterval :: Interval -> Interval -> Interval
+intersectInterval (a, b) (c, d)
+  | lo <= hi  = (lo, hi)
+  | otherwise = (lo, lo)
+  where
+    lo = max a c
+    hi = min c d
+
+-- FIXME
 overlap :: AABB -> AABB -> AABB
-overlap a b = AABB
-  { rightTop   = rightTop   a `max` rightTop   b
-  , leftBottom = leftBottom a `min` leftBottom b
-  }
+overlap a b = a
+--AABB
+--  { boxOrigin = intersectInterval (_x (boxOrigin a), _x afar) (_x (boxOrigin b), _x bfar)
+--  , boxSiz    =
+--  }
+--  where
+--    afar = boxOrigin a + boxSize a
+--    bfar = boxOrigin b + boxSize b
 
 volume :: AABB -> Double
 volume AABB {..} = abs (x * y * z)
-  where V3 x y z = leftBottom - rightTop
+  where
+    V3 x y z = boxSize
+
+contains :: AABB -> Position -> Bool
+contains AABB {..} v
+  = True --boxOrigin - 0.00001 <= v && v <= boxOrigin + boxSize + 0.00001
+
+aabbPlanes :: AABB -> [Plane]
+aabbPlanes AABB {..} =
+  [ Plane (V3   1    0    0 ) (_x boxOrigin + _x boxSize)
+  , Plane (V3   0    1    0 ) (_y boxOrigin + _y boxSize)
+  , Plane (V3   0    0    1 ) (_z boxOrigin + _z boxSize)
+  , Plane (V3 (-1)   0    0 ) (_x boxOrigin)
+  , Plane (V3   0  (-1)   0 ) (_y boxOrigin)
+  , Plane (V3   0    0  (-1)) (_z boxOrigin)
+  ]
+
+-- inner sphere
+innerSphere :: AABB -> Sphere
+innerSphere AABB {..} = Sphere
+  { center = (0.5 .* boxSize) + boxOrigin
+  , radius =  0.5  * minComp boxSize
+  }
+
+outerSphere :: AABB -> Sphere
+outerSphere AABB {..} = Sphere
+  { center = (0.5 .* boxSize) + boxOrigin
+  , radius =  0.5  * maxComp boxSize
+  }
 
 -- TODO use it in composite object contstruction to reduce footprint
 tryShare :: Eq a => (a -> a -> a) -> a -> a -> a
@@ -161,8 +215,8 @@ instance Primitive Sphere where
 
 instance HasVolume Sphere where
   boundingBox Sphere {..} = AABB
-    { rightTop   = center - V3 radius radius radius
-    , leftBottom = center + V3 radius radius radius
+    { boxOrigin = center - V3 radius radius radius
+    , boxSize   = 2     .* V3 radius radius radius
     }
 
 -- TODO Triangles

@@ -3,16 +3,19 @@ module Graphics.Tracy.Object
        , (<.>)
 
        , BVH (..)
-       , annotate
+       , hierarhy
+       , envelop
 
        , Composite (..)
        ) where
 
 import Control.Applicative
+import Data.Default
 import Data.List
 import Data.Maybe
 import Data.Monoid
 import Data.Ord
+import Graphics.Tracy.Color
 import Graphics.Tracy.Material
 import Graphics.Tracy.Geometry
 import Graphics.Tracy.V3
@@ -36,11 +39,19 @@ instance HasVolume Object where
 p <.> m = Tip (Object Nothing m (SomePrim p))
 {-# INLINE (<.>) #-}
 
+boxMat :: Material
+boxMat = def { diffuse = red, transparent = Just 0.1 }
+
 -- expose all bounding boxes
-annotate :: Material -> BVH -> BVH
-annotate _      Empty         = Empty
-annotate _     (Tip a)        = Tip a
-annotate m h @ (Aside bb a b) = h <> (bb <.> m)
+hierarhy :: BVH -> BVH
+hierarhy  Empty         = Empty
+hierarhy (Tip a)        = Tip a
+hierarhy (Aside bb a b)
+  = aside (outerSphere bb <.> boxMat) (Aside bb (hierarhy a) (hierarhy b))
+
+-- | Envelop group of objects in its AABB. Useful for debugging.
+envelop :: BVH -> BVH
+envelop a = a <> (boundingBox a <.> boxMat)
 
 {-----------------------------------------------------------------------
 --  Composite
@@ -100,7 +111,7 @@ leafs (Aside _ l r) = leafs l ++ leafs r
 childOverlap :: BVH -> Double
 childOverlap  Empty  = 0
 childOverlap (Tip _) = 0
-childOverlap (Aside _ l r) = volume (boundingBox l `overlap` boundingBox r)
+childOverlap (Aside _ l r) = volume (boundingBox l) + volume (boundingBox r)
 
 -- O(n)
 insertTip :: Object -> BVH -> BVH

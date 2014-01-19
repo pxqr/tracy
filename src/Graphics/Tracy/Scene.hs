@@ -27,7 +27,7 @@ data Scene = Scene
 a = Sphere (V3 0 0 25) 5            <.> def { diffuse = red, specularK = 0.001 }  -- central ball
 b = Sphere (V3 (-16) 6 26) 12       <.> def { diffuse = yellow }         -- left ball
 c = Sphere (V3 5 (-4) 20) 1         <.> def { diffuse = white, luminosity = gray }  -- light ball
-d = Sphere (V3 14 3 25)         8   <.> def { diffuse = red }      -- big ball
+d = Sphere (V3 14 3 25)         8   <.> def { diffuse = blue }      -- big ball
 e = Sphere (V3 5 11 45)         16  <.> def { diffuse = green }    -- big ball
 f = Sphere (V3 (-2) (-3.8) 12)  1.2 <.> def { diffuse = magenta }  -- nearest ball
 
@@ -41,9 +41,6 @@ spheres = do
   let ss = randomRs (0.3, 1) g
   return $ L.zipWith Sphere ps ss
 
-boxMat :: Material
-boxMat = def { diffuse = red, transparent = Just 0.5 }
-
 instance Default Scene where
   def = Scene
     { backgroundColor = bright blue <> white
@@ -51,8 +48,8 @@ instance Default Scene where
     , bulbs           = sun
     , objects =
       [ groundPlane <.> def { diffuse = gray }
-      , annotate boxMat $ mconcat $ do
-          s <- L.take 200 (unsafePerformIO spheres)
+      , mconcat $ do
+          s <- L.take 10 (unsafePerformIO spheres)
           return $ s <.> def { transparent = Just 0.5 }
       ]
     }
