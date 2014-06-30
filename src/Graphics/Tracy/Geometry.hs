@@ -194,8 +194,8 @@ data Sphere = Sphere
   } deriving (Show, Read)
 
 sphereMult :: Normal -> Sphere -> Maybe Double
-sphereMult ray (Sphere c r) =
-    let pc    = projectionNorm ray c
+sphereMult normal (Sphere c r) =
+    let pc    = projectionNorm normal c
         cath2 = norm (pc - c)
     in if cath2 >  r * r then Nothing
        else
