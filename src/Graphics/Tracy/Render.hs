@@ -48,9 +48,10 @@ primaryRay :: View -> Int -> Int -> Ray
 primaryRay (View w h f) x y = ray orig (normalize dir)
   where
     orig = V3 0 0 f
-    dir  = V3 ((fromIntegral $ x - div w 2) / fromIntegral w)
-              ((fromIntegral $ div h 2 - y) / fromIntegral h)
+    dir  = V3 ((fromIntegral $ x - div w 2) / fromIntegral s)
+              ((fromIntegral $ div h 2 - y) / fromIntegral s)
               (negate f)
+    s = max w h
 
 {-----------------------------------------------------------------------
 --  Env map
