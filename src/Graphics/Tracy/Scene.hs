@@ -2,7 +2,6 @@ module Graphics.Tracy.Scene
        ( Scene(..)
        ) where
 
-import Control.Applicative
 import Data.Default
 import Data.List as L
 import Data.Monoid
@@ -20,7 +19,7 @@ import Graphics.Tracy.V3
 data Scene = Scene
   { backgroundColor   :: Color
   , ambientColor      :: Color
-  , bulbs             :: [Light]
+  , lightSources      :: [Light]
   , objects           :: [BVH]
   }
 
@@ -30,6 +29,9 @@ c = Sphere (V3 5 (-4) 20) 1         <.> def { diffuse = white, luminosity = gray
 d = Sphere (V3 14 3 25)         8   <.> def { diffuse = blue }      -- big ball
 e = Sphere (V3 5 11 45)         16  <.> def { diffuse = green }    -- big ball
 f = Sphere (V3 (-2) (-3.8) 12)  1.2 <.> def { diffuse = magenta }  -- nearest ball
+h = Sphere (V3 (-2) (-2)   10)  3   <.> glass
+h1= Sphere (V3 (-2) (-2)   10)  2   <.> def { luminosity = green }
+sky = Sphere (V3 0 0 0) 1000000000000000000000 <.> def
 
 groundPlane :: Plane
 groundPlane = Plane  (V3 0 1 0) 5
@@ -45,11 +47,12 @@ instance Default Scene where
   def = Scene
     { backgroundColor = bright blue <> white
     , ambientColor    = black
-    , bulbs           = sun
+    , lightSources    = sun
     , objects =
       [ groundPlane <.> def { diffuse = gray }
+--      , a, d, h
       , mconcat $ do
-          s <- L.take 10 (unsafePerformIO spheres)
-          return $ s <.> def { transparent = Just 0.5 }
+          s <- L.take 100 (unsafePerformIO spheres)
+          return $ s <.> def
       ]
     }

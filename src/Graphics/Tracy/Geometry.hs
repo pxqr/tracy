@@ -12,7 +12,6 @@ module Graphics.Tracy.Geometry
        , outerSphere
 
          -- * Ray intersection
-       , Patch
        , Primitive (..)
        , SomePrim  (..)
 
@@ -21,8 +20,6 @@ module Graphics.Tracy.Geometry
        , Plane (..)
        ) where
 
-import Control.Applicative
-import Control.Monad
 import Data.Maybe
 import Data.List
 import Data.Ord
@@ -148,8 +145,6 @@ instance HasVolume AABB where
 {-----------------------------------------------------------------------
 --  Geometry object classes
 -----------------------------------------------------------------------}
-
-type Patch = (Position, Normal)
 
 class Primitive t where
   intersection :: Ray -> t -> Maybe Patch

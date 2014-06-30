@@ -5,6 +5,8 @@ module Graphics.Tracy.V3
        , ray
        , Normal
        , Position
+       , Patch
+       , Direction
 
        , maxComp
        , minComp
@@ -39,6 +41,9 @@ data Ray = Ray
   , direction    :: !Normal
   , invDirection :: !V3
   } deriving (Show, Read)
+
+type Patch = (Position, Normal)
+type Direction = V3
 
 ray :: Position -> Normal -> Ray
 ray p d = Ray p d (1 / d)

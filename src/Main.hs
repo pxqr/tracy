@@ -16,7 +16,7 @@ import Data.Maybe
 import Data.Version (showVersion)
 
 import Graphics.Tracy.Color
-import Graphics.Tracy.Tracer
+import Graphics.Tracy.Render
 import Graphics.Tracy.Scene
 import Graphics.Tracy.V3
 
@@ -86,17 +86,18 @@ handleArgs opts
       putStrLn "optimizing BVH..."
       scene  <- evaluate def
       putStrLn "rendering scene..."
-      let bitmap = runTracer (optImageSize opts) scene envMap (optDepth opts)
+      let bitmap = renderBitmap (optImageSize opts) scene envMap (optDepth opts)
       writeBitmap (optOutput opts) bitmap
 
 
 main :: IO ()
 main = getArgs >>= parseArgs >>= handleArgs
 
-runTracer :: (Int, Int) -> Scene -> Samples -> Int -> Image PixelRGB8
-runTracer (w, h) scene samples depth =
-    let view  = View w h (-1) in
-    generateImage (\x y -> vecToColor (tracePixel scene view samples depth x y)) w h
+renderBitmap :: (Int, Int) -> Scene -> Samples -> Int -> Image PixelRGB8
+renderBitmap (w, h) scene samples depth =
+    let view = View w h (-1)
+        env  = Env vacuumIx depth samples scene
+    in generateImage (\x y -> vecToColor (tracePixel env view (x, y))) w h
   where
     toLDR :: Double -> Double
     toLDR x = ((1 / (1 + exp (-x))) - 0.5) * 2

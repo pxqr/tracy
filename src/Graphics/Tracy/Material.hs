@@ -1,12 +1,27 @@
 module Graphics.Tracy.Material
        ( Material(..)
+
+       , RefractiveIndex
+       , vacuumIx
+       , waterIx
+       , glassIx
+
+         -- * Predefined
+       , glass
+       , water
        ) where
 
 import Data.Default
-
 import Graphics.Tracy.Color
-import Graphics.Tracy.Geometry
 
+type RefractiveIndex = Double
+
+vacuumIx, waterIx, glassIx :: RefractiveIndex
+vacuumIx = 1
+waterIx  = 1.1 -- FIXME
+--waterIx  = 1.31
+glassIx  = 1.1 -- FIXME
+-- glassIx  = 1.54
 
 data Material = Material
   { ambientK    :: !Double
@@ -14,8 +29,9 @@ data Material = Material
   , specularK   :: !Double
   , shiness     :: !Double
   , diffuse     :: !Color
-  , luminosity  :: !Color
+  , luminosity  ::  Color
   , transparent :: !(Maybe Alpha)
+  , refrIndex   :: !(Maybe RefractiveIndex)
   } deriving (Show, Read)
 
 instance Default Material where
@@ -27,4 +43,24 @@ instance Default Material where
     , diffuse    = gray
     , luminosity = black
     , transparent = Nothing
+    , refrIndex   = Nothing
     }
+
+crystal :: Material -> Material
+crystal m = m { transparent = Just 0.9 }
+
+turbid :: Material -> Material
+turbid m = m { transparent = Just 0.3 }
+
+
+water :: Material
+water = def
+  { transparent = Just 0.8
+  , refrIndex   = Just waterIx
+  }
+
+glass :: Material
+glass = def
+  { transparent = Just 0.8
+  , refrIndex   = Just glassIx
+  }

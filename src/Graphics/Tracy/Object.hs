@@ -2,6 +2,7 @@ module Graphics.Tracy.Object
        ( Object(..)
        , (<.>)
 
+       , Intersection
        , BVH (..)
        , hierarhy
        , envelop
@@ -9,10 +10,8 @@ module Graphics.Tracy.Object
        , Composite (..)
        ) where
 
-import Control.Applicative
 import Data.Default
 import Data.List
-import Data.Maybe
 import Data.Monoid
 import Data.Ord
 import Graphics.Tracy.Color
@@ -28,7 +27,7 @@ data Object = Object
   }
 
 instance Primitive Object where
-  intersection ray = intersection ray . prim
+  intersection r = intersection r . prim
   {-# INLINE intersection #-}
 
 instance HasVolume Object where
@@ -60,16 +59,16 @@ envelop a = a <> (boundingBox a <.> boxMat)
 type Intersection a = (a, Patch)
 
 sortByDistance :: Ray -> [Intersection a] -> [Intersection a]
-sortByDistance ray = sortBy (comparing (distance (origin ray) . fst . snd))
+sortByDistance r = sortBy (comparing (distance (origin r) . fst . snd))
 
 class Composite t where
   intersections       :: Ray -> t -> [Intersection Object]
   sortedIntersections :: Ray -> t -> [Intersection Object]
-  sortedIntersections ray = sortByDistance ray . intersections ray
+  sortedIntersections r = sortByDistance r . intersections r
   {-# INLINE sortedIntersections #-}
 
 instance Composite t => Composite [t] where
-  intersections ray = concatMap (intersections ray)
+  intersections r = concatMap (intersections r)
 
 -- | Bounding volume hierarhy.
 data BVH
@@ -77,10 +76,8 @@ data BVH
   | Tip   !Object
   | Aside !AABB !BVH !BVH
 
-singleton :: Object -> BVH
-singleton = undefined
-
 instance Composite BVH where
+  intersections _  Empty         = []
   intersections r (Tip        s)
     | Just p <- intersection r s = [(s, p)]
     |        otherwise           = []
@@ -117,7 +114,7 @@ childOverlap (Aside _ l r) = volume (boundingBox l) + volume (boundingBox r)
 insertTip :: Object -> BVH -> BVH
 insertTip a  Empty              = Tip a
 insertTip a (Tip          b )   = aside (Tip a) (Tip b)
-insertTip a (Aside bb  l  r )
+insertTip a (Aside _   l  r )
   | childOverlap lw <= childOverlap rw = lw
   |               otherwise            = rw
   where
