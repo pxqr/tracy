@@ -1,3 +1,4 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Graphics.Tracy.Color
        ( -- * Colors
          Color (..)
@@ -31,7 +32,7 @@ import Graphics.Tracy.V3
 
 
 newtype Color = Color { clr :: V3 }
-  deriving (Show, Read)
+  deriving (Show, Read, Num)
 
 instance Default Color where
   def = gray
