@@ -9,9 +9,9 @@ import Graphics.Tracy.V3
 
 
 data Light = Light
-  { lightIntensity  :: Double
-  , lightPosition   :: Position
-  , ligthColor :: Color
+  { lightIntensity  :: !Double
+  , lightPosition   :: !Position
+  , ligthColor      :: !Color
   }
 
 lightLine :: Int -> Light -> Position -> [Light]
